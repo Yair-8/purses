@@ -4,12 +4,21 @@ body {
   padding: 0;
   background-color: #f8f0e8;
   color: #333;
+  min-height: 100%;
 }
-
+.wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+main {
+  flex-grow: 1;
+}
 .container {
   max-width: 900px;
   margin: 0 auto;
   padding: 20px;
+  width: 100%;
 }
 
 h1 {
@@ -77,4 +86,7 @@ form textarea {
 
 .contact-info p {
   margin: 5px 0;
+}
+footer {
+  position: static;
 }
