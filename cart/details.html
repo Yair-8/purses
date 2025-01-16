@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Product details</title>
+    <!-- Підключення CSS для стилів -->
+    <link rel="stylesheet" href="../style/main.css" />
+    <link rel="stylesheet" href="../style/style.css" />
+    <link rel="stylesheet" href="../style/product.css" />
+    <link rel="stylesheet" href="../style/recet-styles.css" />
+    <!-- Підключення необхідних скриптів -->
+    <script src="../scripts/components/RequestManager.js"></script>
+    <script src="../scripts/settings.js"></script>
+    <script src="../scripts/components/HeaderManager.js"></script>
+    <script src="../scripts/api/BaseApiManager.js"></script>
+    <script src="../scripts/api/ProductsApiManager.js"></script>
+    <script src="../scripts/api/CartApiManager.js"></script>
+    <script src="../scripts/api/UsersApiManager.js"></script>
+  </head>
+  <body>
+    <script>
+      // Використання класу HeaderManager для створення заголовка з меню
+      document.addEventListener("DOMContentLoaded", () => {
+        new HeaderManager("products/list.html", menuItems);
+      });
+    </script>
+    <div class="wrapper">
+      <div class="container">
+        <div class="content">
+          <div class="container-with-products">
+            <!-- Спіннер завантаження -->
+            <div class="loading" id="loading-spinner" style="display: none;">
+              <div class="spinner"></div>
+              Loading...
+            </div>
+            <!-- Повідомлення про помилку -->
+            <div
+              class="error-message"
+              id="error-message"
+              style="display: none;"
+            >
+              Error occurred during loading data...
+            </div>
+            <div id="product-details" class="product-details"></div>
+          </div>
+        </div>
+        <script>
+          // Функція, що виконується при завантаженні сторінки
+          window.onload = async function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const productId = urlParams.get("id");
+            if (!productId) {
+              document.getElementById("product-details").innerText =
+                "No product ID provided";
+              return;
+            }
+            const user = await UsersApiManager.getUsers();
+            function addToCart(item) {
+              if (user) {
+                CartApiManager.addToCart(item._id)
+                  .then(() => {
+                    alert("Product added to a cart.");
+                  })
+                  .catch(() =>
+                    alert("Product was not added to a cart. Login first.")
+                  );
+              } else {
+                alert("Please login first.");
+              }
+            }
+            // Функція для отримання даних та відображення продуктів
+            async function fetchDataAndDisplay() {
+              const loadingSpinner = document.getElementById("loading-spinner");
+              const errorMessage = document.getElementById("error-message");
+              const productDetailsDiv = document.getElementById(
+                "product-details"
+              );
+
+              try {
+                loadingSpinner.style.display = "block";
+                productDetailsDiv.innerHTML = "";
+                errorMessage.style.display = "none";
+
+                const productData = await ProductsApiManager.getById(productId);
+                console.log("productData:===========", productData);
+
+                if (!productData.data || !productData.data._id) {
+                  productDetailsDiv.innerText = "Product not found.";
+                  return;
+                }
+
+                productDetailsDiv.innerHTML = `
+                 <div class="product-details-image">
+                    <img src="${formatImage(productData.data.image)}" alt="${
+                  productData.title
+                }" />
+                  </div>
+                  <div class="product-details-content">
+                       <h2 class="product-details-title">${
+                         productData.data.title
+                       }</h2>
+                    <p class="product-details-price"><strong>Price:</strong> $${
+                      productData.data.price
+                    }</p>
+                    <p class="product-details-description"><strong>Description:</strong> ${
+                      productData.data.description
+                    }</p>
+                    <button id="add-to-cart-btn" class="addToCart-button">
+                      Add to Cart
+                    </button>
+                    <a href="../cart/cart.html">Back to cart</a>
+                    </div>
+                `;
+                const addToCartBtn = document.getElementById("add-to-cart-btn");
+                addToCartBtn.addEventListener("click", () => {
+                  addToCart(productData.data);
+                });
+              } catch (error) {
+                console.error("Error occurred during fetching data:", error);
+                errorMessage.style.display = "block";
+              } finally {
+                loadingSpinner.style.display = "none";
+              }
+            }
+            // Helper to handle base64 image check
+            function formatImage(image) {
+              // If it's already base64, return as is, otherwise prefix
+              if (image && !image.startsWith("data:")) {
+                return "data:image;base64," + image;
+              }
+              return image || "";
+            }
+
+            await fetchDataAndDisplay();
+          };
+        </script>
+      </div>
+    </div>
+  </body>
+</html>

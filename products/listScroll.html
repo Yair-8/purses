@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Products Scroll</title>
+    <!-- Підключення CSS для стилів -->
+    <link rel="stylesheet" href="../style/main.css" />
+    <link rel="stylesheet" href="../style/style.css" />
+    <link rel="stylesheet" href="../style/product.css" />
+    <link rel="stylesheet" href="../style/recet-styles.css" />
+    <!-- Підключення необхідних скриптів -->
+    <script src="../scripts/components/RequestManager.js"></script>
+    <script src="../scripts/components/GridDataManager.js"></script>
+    <script src="../scripts/settings.js"></script>
+    <script src="../scripts/components/HeaderManager.js"></script>
+    <script src="../scripts/api/BaseApiManager.js"></script>
+    <script src="../scripts/components/PriceOrderSelector.js"></script>
+    <script src="../scripts/api/ProductsApiManager.js"></script>
+    <script src="../scripts/components/LoadOnScroll.js"></script>
+    <script src="../scripts/components/FiltersManager.js"></script>
+  </head>
+  <body>
+    <script>
+      // Використання класу HeaderManager для створення заголовка з меню
+      document.addEventListener("DOMContentLoaded", () => {
+        new HeaderManager("products/listScroll.html", menuItems);
+      });
+    </script>
+    <div class="wrapper">
+      <div class="container">
+        <h1 class="title">Explore our collection</h1>
+        <div class="content">
+          <div class="filters-container"></div>
+          <div class="container-with-products">
+            <div class="price-order-container"></div>
+
+            <!-- Контейнер для  продуктів -->
+            <div id="grid-container"></div>
+            <!-- Спіннер завантаження -->
+            <div class="loading" id="loading-spinner" style="display: none;">
+              <div class="spinner"></div>
+              Loading...
+            </div>
+            <!-- Повідомлення про помилку -->
+            <div
+              class="error-message"
+              id="error-message"
+              style="display: none;"
+            >
+              Error occurred during loading data...
+            </div>
+            <div id="add-link"></div>
+          </div>
+        </div>
+        <script>
+          let pageData = {};
+
+          // Функція, що виконується при завантаженні сторінки
+          window.onload = async function () {
+            let priceOrderSelector, filtersManager;
+            // Ініціалізація класу LoadOnScroll
+            const infiniteScroll = new LoadOnScroll(
+              "#grid-container",
+              "products",
+              6
+            );
+
+            //функція застосування фільтрів
+            function getFiltersQueryString() {
+              const queryOptions = [];
+              const filtersQueryString = filtersManager.getQueryString();
+              if (filtersQueryString) queryOptions.push(filtersQueryString);
+
+              queryOptions.push(
+                `sort=price:${priceOrderSelector.currentOrder}`
+              );
+              return queryOptions.join("&");
+            }
+            // Функція для видалення користувача за ідентифікатором
+            async function deleteFunction(id) {
+              const data = await ProductsApiManager.delete(id);
+              if (data.doLogout) return RequestManager.onLogout();
+              window.location.reload();
+            }
+
+            // Функція для отримання даних та відображення таблиці продуктів
+            async function fetchDataAndDisplay(page = 0) {
+              const loadingSpinner = document.getElementById("loading-spinner");
+              const errorMessage = document.getElementById("error-message");
+              const gridContainer = document.getElementById("grid-container");
+
+              loadingSpinner.style.display = "block";
+              gridContainer.innerHTML = "";
+              errorMessage.style.display = "none";
+
+              try {
+                const query = getFiltersQueryString();
+                infiniteScroll.resetPage();
+                infiniteScroll.setQuery(query);
+                infiniteScroll.loadItems();
+              } catch (error) {
+                console.error("Помилка при завантаженні даних:", error);
+                errorMessage.style.display = "block";
+              } finally {
+                loadingSpinner.style.display = "none";
+              }
+            }
+            // Initialize priceOrderSelector before using it
+            priceOrderSelector = new PriceOrderSelector(
+              ".price-order-container",
+              () => fetchDataAndDisplay(0)
+            );
+
+            //----------------------
+            // Отримання даних продуктів з сервера
+            const resFiltersData = await ProductsApiManager.getFiltersData();
+            console.log(
+              "resFiltersData==============>>>>>>>>>",
+              resFiltersData
+            );
+            if (resFiltersData?.data) {
+              const filtersConfig = [
+                {
+                  name: "title",
+                  title: "Product Title",
+                  type: "search",
+                },
+                {
+                  name: "price",
+                  title: "Price",
+                  type: "range",
+                  options: { min: 0, max: 1000 },
+                },
+              ];
+              //   ---
+              filtersManager = new FiltersManager(
+                filtersConfig,
+                ".filters-container",
+                async () => {
+                  await fetchDataAndDisplay(0);
+                }
+              );
+              // Виклик функції для отримання та відображення даних
+              await fetchDataAndDisplay(0);
+            }
+          };
+        </script>
+      </div>
+    </div>
+  </body>
+</html>

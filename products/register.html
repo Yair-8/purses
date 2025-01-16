@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Add product</title>
+    <!-- Підключення CSS для стилів -->
+    <link rel="stylesheet" href="../style/main.css" />
+    <link rel="stylesheet" href="../style/style.css" />
+    <!-- Підключення необхідних скриптів -->
+    <script src="../scripts/components/RequestManager.js"></script>
+    <script src="../scripts/components/FormManager.js"></script>
+    <script src="../scripts/components/ListDataManager.js"></script>
+    <script src="../scripts/settings.js"></script>
+    <script src="../scripts/components/HeaderManager.js"></script>
+    <script src="../scripts/api/BaseApiManager.js"></script>
+    <script src="../scripts/api/UsersApiManager.js"></script>
+    <script src="../scripts/api/ProductsApiManager.js"></script>
+  </head>
+  <body>
+    <script>
+      //Використання класу HeaderManager для створення заголовка з меню
+      document.addEventListener("DOMContentLoaded", async () => {
+        //----- Вставка заголовку
+        const headerManager = new HeaderManager(
+          "products/form.html",
+          menuItems
+        );
+      });
+    </script>
+    <!-- Контейнер -->
+    <div id="container" class="edit-container">
+      <h1 class="title">Product Form</h1>
+    </div>
+    <!-- Спіннер завантаження -->
+    <div class="loading" id="loading-spinner" style="display: none;">
+      <div class="spinner"></div>
+      Loading...
+    </div>
+    <!-- Повідомлення про помилку -->
+    <div class="error-message" id="error-message" style="display: none;">
+      Error occurred during loading data...
+    </div>
+
+    <script>
+      // Функція, що виконується при завантаженні сторінки
+      document.addEventListener("DOMContentLoaded", async () => {
+        // Функція для отримання даних та відображення форми
+        async function fetchDataAndDisplay() {
+          const loadingSpinner = document.getElementById("loading-spinner");
+          const errorMessage = document.getElementById("error-message");
+          const container = document.getElementById("container");
+
+          try {
+            loadingSpinner.style.display = "block";
+            container.innerHTML = "";
+            errorMessage.style.display = "none";
+
+            //----- Вставка форми
+            const prodObj =
+              (await ProductsApiManager.getBasedOnQueryId())?.data ?? {};
+            redirectUrl = `./list.html`;
+            console.log("prodObj=====", prodObj);
+
+            if (prodObj.image && !prodObj.image.startsWith("data:")) {
+              prodObj.image = "data:image;base64," + prodObj.image;
+            }
+            const submitCallback = async (data) => {
+              let res = await ProductsApiManager.register(data, prodObj);
+
+              if (res.errors) {
+                ProductsApiManager.showErrors(res.errors);
+              } else {
+                window.location.href = redirectUrl;
+              }
+            };
+            //---
+
+            // let prodObj = {};
+            // const urlParams = new URLSearchParams(window.location.search);
+            // const id = urlParams.get("id") || "";
+            // console.log("id============", id);
+            // const res = await ProductsApiManager.getById(id);
+            // console.log("Server Response=====================:", res);
+            // if (id) {
+            //   prodObj = (await ProductsApiManager.getById(id))?.data;
+            //   console.log("Product Data:==================", prodObj);
+            //   if (!prodObj) throw new Error("Product is absent or was deleted");
+            // }
+            // if (prodObj.image && !prodObj.image.startsWith("data:")) {
+            //   prodObj.image = "data:image;base64," + prodObj.image;
+            // }
+            // const submitCallback = async (data) => {
+            //   await ProductsApiManager.add(data, id);
+            // };
+            //---
+
+            const fields = [
+              {
+                name: "title",
+                type: "text",
+                required: true,
+                label: "Title",
+              },
+              { name: "price", type: "number", required: true, label: "Price" },
+              { name: "description", type: "text", label: "Description" },
+              {
+                name: "image",
+                type: "file",
+                accept: "image/",
+                label: "Image",
+              },
+            ];
+            const form = new FormManager(fields, submitCallback, prodObj || {});
+            form.render("container");
+          } catch (error) {
+            console.error("Error occurred during loading data:", error);
+            errorMessage.style.display = "block";
+          } finally {
+            loadingSpinner.style.display = "none";
+          }
+        }
+
+        // Виклик функції для отримання та відображення даних
+        fetchDataAndDisplay();
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Реєстрація</title>
+    <!-- Підключення CSS файлу для стилізації сторінки -->
+    <link rel="stylesheet" href="../style/main.css" />
+    <link rel="stylesheet" href="../style/form.css" />
+    <link rel="stylesheet" href="../style/style.css" />
+    <!-- Підключення необхідних JavaScript файлів -->
+    <script src="../scripts/components/RequestManager.js"></script>
+    <script src="../scripts/settings.js"></script>
+    <script src="../scripts/components/HeaderManager.js"></script>
+    <script src="../scripts/api/LoginApiManager.js"></script>
+  </head>
+  <body>
+    <script>
+      // Використання HeaderManager для створення заголовка з меню
+      document.addEventListener("DOMContentLoaded", () => {
+        new HeaderManager("auth/signup.html", menuItems);
+      });
+    </script>
+    <div class="wrapper">
+      <div class="container">
+        <!-- Форма реєстрації -->
+        <form id="signup-form" class="form">
+          <h1>Реєстрація</h1>
+          <!-- Поле для введення імені -->
+          <div>
+            <label for="name">Ім'я:</label>
+            <input type="text" name="username" id="username" required />
+          </div>
+          <!-- Поле для введення електронної пошти -->
+          <div>
+            <label for="email">Email:</label>
+            <input type="email" name="email" id="email" required />
+          </div>
+          <!-- Поле для введення пароля -->
+          <div>
+            <label for="password">Пароль:</label>
+            <input type="password" name="password" id="password" required />
+          </div>
+          <!-- Поле для підтвердження пароля -->
+          <!-- <div>
+        <label for="confirm-password">Підтвердьте пароль:</label>
+        <input type="password" name="confirm-password" id="confirm-password" required />
+      </div> -->
+          <!-- Кнопка для надсилання форми -->
+          <button type="submit" class="submit-button">Sign in</button>
+          <div>
+            <p>Already a user?</p>
+            <button
+              onclick="window.location.href='login.html'"
+              class="submit-button"
+            >
+              LOGIN
+            </button>
+          </div>
+        </form>
+        <!-- Контейнер для повідомлень -->
+        <div id="messages"></div>
+        <!-- Контейнер для помилок -->
+        <div id="errors"></div>
+      </div>
+    </div>
+    <script>
+      // Додаємо обробник події для форми реєстрації
+      document
+        .getElementById("signup-form")
+        .addEventListener("submit", async function (event) {
+          event.preventDefault(); // Запобігаємо звичайному надсиланню форми
+
+          // Отримуємо дані з форми
+          const form = event.target;
+          const formData = {
+            username: form.username.value,
+            email: form.email.value,
+            password: form.password.value,
+            // confirmPassword: form['confirm-password'].value,
+          };
+          //  // Перевірка, чи паролі співпадають
+          //  if (formData.password !== formData.confirmPassword) {
+          //    document.getElementById("messages").innerText =
+          //      "Паролі не співпадають!";
+          //    return;
+          //  }
+          try {
+            // Виконуємо запит на реєстрацію через SignupApiManager
+            const response = await LoginApiManager.signup(formData, (data) => {
+              // Зберігаємо токен у localStorage
+              localStorage.setItem("jwt_token", data.token);
+            });
+          } catch (error) {
+            // Відображаємо повідомлення про помилку у разі невдалої реєстрації
+            document.getElementById("messages").innerText =
+              "Помилка реєстрації: " + error.message;
+          }
+        });
+    </script>
+  </body>
+</html>

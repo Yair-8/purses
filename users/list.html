@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="uk">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Користувачі</title>
+    <!-- Підключення CSS для стилів -->
+    <link rel="stylesheet" href="../style/main.css" />
+    <!-- Підключення необхідних скриптів -->
+    <script src="../scripts/components/RequestManager.js"></script>
+    <script src="../scripts/components/ListDataManager.js"></script>
+    <script src="../scripts/settings.js"></script>
+    <script src="../scripts/components/HeaderManager.js"></script>
+    <script src="../scripts/api/UsersApiManager.js"></script>
+    <!-- <script src="../scripts/UsersTypeApiManager.js"></script> -->
+  </head>
+  <body>
+    <script>
+      // Використання класу HeaderManager для створення заголовка з меню
+      document.addEventListener("DOMContentLoaded", () => {
+        new HeaderManager("users/list.html", menuItems);
+      });
+    </script>
+    <!-- <h1>Список користувачів</h1> -->
+    <!-- Контейнер для таблиці з користувачами -->
+    <div id="table-container"></div>
+
+    <!-- Спіннер завантаження -->
+    <div class="loading" id="loading-spinner" style="display: none;">
+      <div class="spinner"></div>
+      Loading...
+    </div>
+    <!-- Повідомлення про помилку -->
+    <div class="error-message" id="error-message" style="display: none;">
+      Error occurred during loading data...
+    </div>
+    <!-- Посилання для додавання нового користувача -->
+    <div id="add-user-link"></div>
+
+    <script>
+      // Функція, що виконується при завантаженні сторінки
+      window.onload = async function () {
+        // Function to check if the user is admin and authenticated
+        const showAddUserLink = (data) => {
+          const addUserLink = document.getElementById("add-user-link");
+
+          // Check if user is admin and authenticated
+          if (
+            RequestManager.isAuthenticated() &&
+            data?.user?.type?.title === "admin"
+          ) {
+            const link = document.createElement("a");
+            link.href = "./register.html";
+            link.className = "add-user";
+            link.textContent = "Add user";
+            addUserLink.appendChild(link);
+          }
+        };
+
+        // Функція для видалення користувача за ідентифікатором
+        async function deleteFunction(id) {
+          const data = await UsersApiManager.deleteUser(id);
+          if (data.doLogout) return RequestManager.onLogout();
+          window.location.reload();
+        }
+
+        // Функція для отримання даних та відображення таблиці користувачів
+        async function fetchDataAndDisplay() {
+          const loadingSpinner = document.getElementById("loading-spinner");
+          const errorMessage = document.getElementById("error-message");
+          const tableContainer = document.getElementById("table-container");
+
+          try {
+            loadingSpinner.style.display = "block";
+            tableContainer.innerHTML = "";
+            errorMessage.style.display = "none";
+
+            const data = await UsersApiManager.getUsers();
+            const usersList = data?.users;
+
+            if (usersList) {
+              usersList.forEach((user) => {
+                user.type = user.type?.title;
+              });
+              const fields = {
+                username: "Name",
+                type: "User type",
+                email: "Email",
+              };
+              console.log("usersList-=-=-=-=-=-=-=-==-=", usersList);
+
+              const createLinkFunction = (id) => `./register.html?id=${id}`;
+              const table = ListDataManager.createTableFromList(
+                usersList,
+                fields,
+                data?.user?.type.title === "admin" &&
+                  RequestManager.isAuthenticated() &&
+                  createLinkFunction,
+                data?.user?.type?.title === "admin" &&
+                  RequestManager.isAuthenticated() &&
+                  deleteFunction
+              );
+              console.log("usersList-=-=-=-=-=-=-=-==-=", usersList);
+              console.log("data-=-=-=-=-=-=-=-==-=", data);
+
+              tableContainer.append(table);
+            } else {
+              throw new Error("No users found");
+            }
+          } catch (error) {
+            console.error(" Error occurred during loading data:", error);
+            errorMessage.style.display = "block";
+          } finally {
+            loadingSpinner.style.display = "none";
+          }
+        }
+        const data = await UsersApiManager.getUsers();
+        showAddUserLink(data);
+        // Виклик функції для отримання та відображення даних
+        fetchDataAndDisplay();
+      };
+    </script>
+  </body>
+</html>
