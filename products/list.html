@@ -82,10 +82,9 @@
             }
 
             //adds to cart only if user is logged in
-            const user = JSON.parse(localStorage.getItem("user"));
-            console.log("user===>", user);
+
             function addToCart(item) {
-              if (user) {
+              if (RequestManager.isAuthenticated()) {
                 CartApiManager.addToCart(item._id)
                   .then(() => {
                     alert("Product added to a cart.");
