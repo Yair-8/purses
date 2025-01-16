@@ -1,7 +1,7 @@
 class RequestManager {
   // Базовий URL для API запитів
-  static apiBase = "http://localhost:3000/api/v1";
-  //static apiBase = "https://less12-backend.onrender.com/api/v1";
+  //   static apiBase = "http://localhost:3000/api/v1";
+  static apiBase = "https://handcrafted-purses.netlify.app/api/v1";
 
   // Метод для отримання повного маршруту до сервера
   static getServerRoute(path) {
