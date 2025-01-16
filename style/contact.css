@@ -15,7 +15,7 @@ main {
   flex-grow: 1;
 }
 .container {
-  max-width: 900px;
+  max-width: 850px;
   margin: 0 auto;
   padding: 20px;
   width: 100%;
@@ -89,4 +89,25 @@ form textarea {
 }
 footer {
   position: static;
+}
+@media screen and (max-width: 900px) {
+  .container {
+    max-width: 80%;
+  }
+}
+@media screen and (max-width: 550px) {
+  .container {
+    max-width: 70%;
+    padding: 10px;
+  }
+  form input,
+  form textarea {
+    padding: 5px;
+  }
+}
+@media screen and (max-width: 300px) {
+  .container {
+    max-width: 90%;
+    padding: 0;
+  }
 }
